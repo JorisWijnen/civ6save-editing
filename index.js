@@ -8,8 +8,8 @@ const zlib = require('zlib');
 function decompress(savefile) {
   const civsav = savefile;
   const modindex = civsav.lastIndexOf('MOD_TITLE');
-  const bufstartindex = civsav.indexOf(new Buffer([0x78, 0x9c]), modindex);
-  const bufendindex = civsav.lastIndexOf(new Buffer([0x00, 0x00, 0xFF, 0xFF]));
+  const bufstartindex = civsav.indexOf(Buffer.from([0x78, 0x9c]), modindex);
+  const bufendindex = civsav.lastIndexOf(Buffer.from([0x00, 0x00, 0xFF, 0xFF]));
 
   const data = civsav.slice(bufstartindex, bufendindex);
 
@@ -23,7 +23,7 @@ function decompress(savefile) {
   }
   const compressedData = Buffer.concat(chunks);
 
-  const decompressed = zlib.inflateSync(compressedData, {finishFlush: zlib.Z_SYNC_FLUSH});
+  const decompressed = zlib.inflateSync(compressedData, { finishFlush: zlib.Z_SYNC_FLUSH });
 
   return decompressed;
 }
@@ -37,7 +37,7 @@ function decompress(savefile) {
 function recompress(savefile, binfile) {
   // We need to insert an extra 4 bytes every 64 * 1024 bytes of data to indicate length of the upcoming chunk
 
-  const compressedBuffer = zlib.deflateSync(binfile, {finishFlush: zlib.Z_SYNC_FLUSH});
+  const compressedBuffer = zlib.deflateSync(binfile, { finishFlush: zlib.Z_SYNC_FLUSH });
   const length = compressedBuffer.length;
   const CHUNK_LENGTH = 64 * 1024;
   const chunks = [];
@@ -45,7 +45,7 @@ function recompress(savefile, binfile) {
   for (let i = 0; i < length; i += CHUNK_LENGTH) {
     const slice = compressedBuffer.slice(i, i + CHUNK_LENGTH);
     if (i !== 0) {
-      let intbuf = new Buffer(4);
+      let intbuf = Buffer.alloc(4);
       intbuf.writeInt32LE(slice.length);
       chunks.push(intbuf);
     }
@@ -62,8 +62,8 @@ function recompress(savefile, binfile) {
   const modindex = civsav.lastIndexOf('MOD_TITLE');
 
   // Hex sequence 78 9c indicates the beginning of a zlib compressed buffer, and 00 00 FF FF indicates  the end
-  const bufstartindex = civsav.indexOf(new Buffer([0x78, 0x9c]), modindex);
-  const bufendindex = civsav.lastIndexOf(new Buffer([0x00, 0x00, 0xFF, 0xFF])) + 4;
+  const bufstartindex = civsav.indexOf(Buffer.from([0x78, 0x9c]), modindex);
+  const bufendindex = civsav.lastIndexOf(Buffer.from([0x00, 0x00, 0xFF, 0xFF])) + 4;
 
   const merged = Buffer.concat([civsav.slice(0, bufstartindex), finalBuffer, civsav.slice(bufendindex)]);
 
@@ -90,7 +90,7 @@ function modify(savefile, callback = (x => x)) {
  */
 function modifytiles(savefile, callback = (b => b)) {
   return modify(savefile, bin => {
-    const searchBuffer = new Buffer([0x0E, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00]);
+    const searchBuffer = Buffer.from([0x0E, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00]);
     const mapstartindex = bin.indexOf(searchBuffer);
     const tiles = bin.readInt32LE(mapstartindex + 12);
 
@@ -107,7 +107,7 @@ function modifytiles(savefile, callback = (b => b)) {
       const newtilebuf = callback(tilebuf);
       newtilebuf.copy(bin, mindex);
 
-      mindex += 55 + buflength;      
+      mindex += 55 + buflength;
     }
 
     return bin;
@@ -134,19 +134,19 @@ function verifyextension(filename, extension = '.Civ6Save') {
  */
 function savetomapjson(savefile) {
   const mapsizedata = {
-    '1144': {x: 44, y: 26},
-    '2280': {x: 60, y: 38},
-    '3404': {x: 74, y: 46},
-    '4536': {x: 84, y: 54},
-    '5760': {x: 96, y: 60},
-    '6996': {x: 106, y: 66},
+    '1144': { x: 44, y: 26 },
+    '2280': { x: 60, y: 38 },
+    '3404': { x: 74, y: 46 },
+    '4536': { x: 84, y: 54 },
+    '5760': { x: 96, y: 60 },
+    '6996': { x: 106, y: 66 },
   }
 
   const bin = decompress(savefile);
-  const searchBuffer = new Buffer([0x0E, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00]);
+  const searchBuffer = Buffer.from([0x0E, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00]);
   const mapstartindex = bin.indexOf(searchBuffer);
   const tiles = bin.readInt32LE(mapstartindex + 12);
-  const map = {'tiles': []};
+  const map = { 'tiles': [] };
 
   let mindex = mapstartindex + 16;
 

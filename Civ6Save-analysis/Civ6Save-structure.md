@@ -6,7 +6,7 @@ ByteLength | Type | Purpose | DefaultValue
 --- | --- | --- | ---
 4 | String | File Header | "CIV6"
 4 | Int32 | ? | 0x01?
-4 | Int32 | ? | 0x20?
+4 | Int32 | ? | 0x20 - 0x22?
 4 | Int32 | ? | 0x05d9b099?
 4 | Int32 | ? | 0x05?
 8 | ? | GAME_SPEED String Length | N/A
